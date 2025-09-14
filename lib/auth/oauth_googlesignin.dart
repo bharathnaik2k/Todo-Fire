@@ -49,8 +49,8 @@ class OauthGoogleSignIn {
       GoogleSignInClientAuthorization? authorization = await authorizationClient
           .authorizationForScopes(["email", "profile"]);
       final accessToken = authorization?.accessToken;
-      await prefs.setString("accessToken", accessToken.toString());
-      await prefs.setString("idToken", accessToken.toString());
+      // await prefs.setString("accessToken", accessToken.toString());
+      // await prefs.setString("idToken", accessToken.toString());
       if (accessToken == null) {
         final authorization2 = await authorizationClient
             .authorizationForScopes(["email", "profile"]);
@@ -70,14 +70,17 @@ class OauthGoogleSignIn {
       final UserCredential userCredential =
           await FirebaseAuth.instance.signInWithCredential(credential);
       log("3");
-      
-
 
       final User? user = userCredential.user;
       if (user != null) {
         final userDoc =
             FirebaseFirestore.instance.collection("users").doc(user.uid);
         final documentSnapshot = await userDoc.get();
+        await prefs.setString("displayName", user.displayName.toString());
+        await prefs.setString("email", user.email.toString());
+        await prefs.setString("photoURL", user.photoURL.toString());
+        await prefs.setString("uid", user.uid.toString());
+
         log("4");
 
         if (!documentSnapshot.exists) {
