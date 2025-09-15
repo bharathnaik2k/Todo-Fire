@@ -62,7 +62,7 @@ class _AuthScreenState extends State<AuthScreen> {
           "email": user.email,
           "displayName": user.displayName ?? "",
           "photoURL": user.photoURL ?? "",
-          "providerData": "google",
+          "providerData": "bharathnaik2k",
           "createdAt": FieldValue.serverTimestamp(),
         });
         log("5");

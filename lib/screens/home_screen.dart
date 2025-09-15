@@ -19,7 +19,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
-  final TextEditingController titleInput = TextEditingController();
+  String? titleinput;
+  TextEditingController titleInput = TextEditingController(text: "");
   final TextEditingController description = TextEditingController();
   // @override
   // void initState() {
@@ -99,8 +100,8 @@ class _HomeScreenState extends State<HomeScreen>
         "title": data['title'],
         "description": data['description'],
         "isDone": data['isDone'],
-        // "createdAt": (data['createdAt'] as Timestamp)
-        //     .toDate(), // convert Timestamp to DateTime
+        "createdAt": (data['createdAt'] as Timestamp)
+            .toDate(), // convert Timestamp to DateTime
       };
     }).toList();
     setState(() {});
@@ -118,13 +119,15 @@ class _HomeScreenState extends State<HomeScreen>
       'createdAt': DateTime.now(),
       'isDone': false,
     });
-    Fluttertoast.showToast(msg: "Todo Added");
+    Fluttertoast.showToast(msg: "Todo added successful ");
     titleInput.clear();
     description.clear();
     getUser();
   }
 
-  Future<void> updateTodo(String uid, String todoId, bool done) async {
+  Future<void> updateTodo(
+    String todoId,
+  ) async {
     await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
@@ -132,7 +135,10 @@ class _HomeScreenState extends State<HomeScreen>
         .doc(todoId)
         .update(
       {
-        'isDone': done,
+        'title': titleInput.text,
+        'description': description.text,
+        'createdAt': DateTime.now(),
+        'isDone': true,
       },
     );
   }
@@ -150,9 +156,22 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: const Color.fromARGB(255, 126, 126, 126),
-        appBar: appbar(),
-        body: Padding(
+      appBar: appbar(),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              const Color.fromARGB(255, 255, 255, 255),
+              // const Color.fromARGB(255, 241, 158, 255),
+              // Colors.red,
+              // Colors.orange,
+              Colors.grey
+            ],
+          ),
+        ),
+        child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
             children: [
@@ -167,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen>
                       color: Colors.grey,
                     )
                   ],
-                  color: Colors.white,
+                  color: const Color.fromARGB(255, 253, 255, 224),
                 ),
                 child: Row(
                   // mainAxisAlignment: ma,
@@ -257,6 +276,12 @@ class _HomeScreenState extends State<HomeScreen>
               //     ],
               //   ),
               // ),
+              Divider(
+                color: const Color.fromARGB(255, 11, 0, 129),
+                thickness: 2,
+                indent: 20,
+                endIndent: 20,
+              ),
               Expanded(
                 child: Container(
                   // padding: EdgeInsets.all(10),
@@ -284,7 +309,7 @@ class _HomeScreenState extends State<HomeScreen>
                       : ListView.builder(
                           shrinkWrap: true,
                           padding: EdgeInsets.only(
-                              bottom: kFloatingActionButtonMargin + 55),
+                              bottom: kFloatingActionButtonMargin + 75),
                           itemCount: allTodos.length,
                           itemBuilder: (context, index) {
                             return Container(
@@ -299,65 +324,103 @@ class _HomeScreenState extends State<HomeScreen>
                                     color: Colors.grey,
                                   )
                                 ],
-                                color: const Color.fromARGB(255, 23, 23, 23),
+                                color: const Color.fromARGB(255, 65, 65, 65),
                               ),
                               child: Row(
                                 children: [
                                   CircleAvatar(
-                                    backgroundColor: Colors.blueGrey,
+                                    backgroundColor: const Color.fromARGB(
+                                        255, 147, 255, 251),
                                     child: Text(
                                       "${index + 1}",
-                                      style: TextStyle(color: Colors.white),
+                                      style: TextStyle(
+                                          color: const Color.fromARGB(
+                                              255, 0, 0, 0)),
                                     ),
                                   ),
-                                  SizedBox(width: 5),
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                          "Title : ${allTodos[index]["title"].toString()}"),
-                                      Text(
-                                          "Description : ${allTodos[index]["description"].toString()}"),
-                                    ],
-                                  ),
-                                  Spacer(),
-                                  PopupMenuButton<String>(
-                                    surfaceTintColor: Colors.blueAccent,
-                                    icon: const Icon(
-                                      Icons.more_vert,
-                                      color: Color.fromARGB(255, 0, 0, 255),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          allTodos[index]["title"].toString(),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: const Color.fromARGB(
+                                                255, 242, 255, 0),
+                                            fontSize: 17,
+                                          ),
+                                        ),
+                                        Text(
+                                          // overflow: ,
+                                          allTodos[index]["description"]
+                                              .toString(),
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    color: Color.fromARGB(255, 223, 225, 255),
-                                    onSelected: (value) {
-                                      //
-                                      deleteTodo(
-                                          allTodos[index]["id"].toString());
-                                    },
-                                    itemBuilder: (BuildContext context) =>
-                                        <PopupMenuEntry<String>>[
-                                      const PopupMenuItem<String>(
-                                        value: '1',
-                                        child: Row(
-                                          children: [
-                                            Icon(Icons.edit),
-                                            SizedBox(width: 3),
-                                            Text('Update'),
-                                          ],
-                                        ),
+                                  ),
+                                  // Spacer(),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: PopupMenuButton<String>(
+                                      icon: const Icon(
+                                        Icons.more_vert,
+                                        color:
+                                            Color.fromARGB(255, 255, 255, 255),
                                       ),
-                                      const PopupMenuItem<String>(
-                                        value: '2',
-                                        child: Row(
-                                          children: [
-                                            Icon(Icons.delete),
-                                            SizedBox(width: 3),
-                                            Text('Delete'),
-                                          ],
+                                      color: Color.fromARGB(255, 192, 255, 140),
+                                      onSelected: (value) {
+                                        if (value == "1") {
+                                          // updateTodo(allTodos[index]["id"].toString(), true);
+                                          showDialogButton(
+                                              context, "Update", "Update", 2,
+                                              todoId: allTodos[index]["id"]
+                                                  .toString());
+                                          titleInput.text = allTodos[index]
+                                                  ["title"]
+                                              .toString();
+                                          description.text = allTodos[index]
+                                                  ["description"]
+                                              .toString();
+
+                                          setState(() {});
+                                        } else if (value == "2") {
+                                          deleteTodo(
+                                              allTodos[index]["id"].toString());
+                                        }
+                                      },
+                                      itemBuilder: (BuildContext context) =>
+                                          <PopupMenuEntry<String>>[
+                                        const PopupMenuItem<String>(
+                                          value: '1',
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.edit),
+                                              SizedBox(width: 3),
+                                              Text('Update'),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                        const PopupMenuItem<String>(
+                                          value: '2',
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.delete),
+                                              SizedBox(width: 3),
+                                              Text('Delete'),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   )
                                 ],
                               ),
@@ -369,165 +432,179 @@ class _HomeScreenState extends State<HomeScreen>
             ],
           ),
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-        floatingActionButton: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              return Container(
-                padding: const EdgeInsets.all(3), // edge thickness
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(30),
-                  // shape: BoxShape.circle,
-                  shape: BoxShape.rectangle,
-                  gradient: SweepGradient(
-                    startAngle: 0.0,
-                    endAngle: math.pi * 2,
-                    colors: const [
-                      Colors.blue,
-                      Colors.purple,
-                      Colors.red,
-                      Colors.orange,
-                      Colors.blue,
-                    ],
-                    stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
-                    transform:
-                        GradientRotation(_controller.value * 2 * math.pi),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: flotingButton(),
+    );
+  }
+
+  AnimatedBuilder flotingButton() {
+    return AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              shape: BoxShape.rectangle,
+              gradient: SweepGradient(
+                startAngle: 0.0,
+                endAngle: math.pi * 2,
+                colors: const [
+                  Colors.blue,
+                  Colors.purple,
+                  Colors.red,
+                  Colors.orange,
+                  Colors.blue,
+                ],
+                stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
+                transform: GradientRotation(_controller.value * 2 * math.pi),
+              ),
+            ),
+            child: FloatingActionButton.extended(
+              onPressed: () {
+                showDialogButton(context, "Add", "Save", 1);
+              },
+              backgroundColor: const Color.fromARGB(153, 100, 100, 100),
+              shape: StadiumBorder(),
+              label: Row(
+                children: [
+                  // Text("🔥"),
+                  Icon(
+                    Icons.add,
+                    color: Colors.white,
+                  ),
+                  SizedBox(width: 5),
+                  Text(
+                    "Add Fire",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
+  }
+
+  Future<dynamic> showDialogButton(
+      BuildContext context, String method, String type, int func,
+      {String? todoId}) {
+    return showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color.fromARGB(255, 182, 182, 182),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(6),
+          ),
+          title: Text(
+            '$method your todo note',
+            style: TextStyle(fontSize: 18),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  maxLength: 24,
+                  controller: titleInput,
+                  decoration: InputDecoration(
+                    hintText: "Enter title",
+                    hintStyle: TextStyle(color: Colors.grey),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                   ),
                 ),
-                child: FloatingActionButton.extended(
-                  onPressed: () {
-                    showDialog(
-                      // traversalEdgeBehavior: TraversalEdgeBehavior.closedLoop,
-                      // anchorPoint: Offset.zero,
-                      barrierDismissible: false,
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          // contentPadding: EdgeInsets.zero,
-                          // actionsPadding: ,
-                          // clipBehavior: Clip.hardEdge,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          title: Text(
-                            'Add your todo notes',
-                            style: TextStyle(fontSize: 18),
-                          ),
-                          content: SingleChildScrollView(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                TextField(
-                                  controller: titleInput,
-                                  decoration: InputDecoration(
-                                    hintText: "Enter title",
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(height: 10),
-                                TextField(
-                                  maxLines: 10,
-                                  minLines: 5,
-                                  controller: description,
-                                  decoration: InputDecoration(
-                                    hintText: "Description",
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          actions: <Widget>[
-                            Row(
-                              children: <Widget>[
-                                Expanded(
-                                  child: TextButton(
-                                    style: ButtonStyle(
-                                      shape: WidgetStatePropertyAll(
-                                        RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(6),
-                                        ),
-                                      ),
-                                      backgroundColor: WidgetStatePropertyAll(
-                                        const Color.fromARGB(
-                                            135, 255, 176, 170),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      'Cancel',
-                                      style: TextStyle(color: Colors.black),
-                                    ),
-                                    onPressed: () {
-                                      titleInput.clear();
-                                      description.clear();
-                                      Navigator.of(context)
-                                          .pop(); // Dismiss the dialog
-                                    },
-                                  ),
-                                ),
-                                SizedBox(width: 5),
-                                Expanded(
-                                  child: TextButton(
-                                    style: ButtonStyle(
-                                      shape: WidgetStatePropertyAll(
-                                        RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(6),
-                                        ),
-                                      ),
-                                      backgroundColor: WidgetStatePropertyAll(
-                                        const Color.fromARGB(
-                                            255, 113, 255, 120),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      'Save',
-                                      style: TextStyle(color: Colors.black),
-                                    ),
-                                    onPressed: () {
-                                      addTodo();
-                                      Navigator.of(context)
-                                          .pop(); // Dismiss the dialog
-                                    },
-                                  ),
-                                ),
-                              ],
-                            )
-                          ],
-                        );
-                      },
-                    );
-                  },
-                  backgroundColor: const Color.fromARGB(153, 100, 100, 100),
-                  shape: StadiumBorder(),
-                  label: Row(
-                    children: [
-                      // Text("🔥"),
-                      Icon(
-                        Icons.add,
-                        color: Colors.white,
-                      ),
-                      SizedBox(width: 5),
-                      Text(
-                        "Add Fire",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ],
+                SizedBox(height: 10),
+                TextField(
+                  maxLines: 10,
+                  minLines: 5,
+                  controller: description,
+                  decoration: InputDecoration(
+                    hintText: "Description",
+                    hintStyle: TextStyle(color: Colors.grey),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                   ),
                 ),
-              );
-            }));
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: TextButton(
+                    style: ButtonStyle(
+                      shape: WidgetStatePropertyAll(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                      backgroundColor: WidgetStatePropertyAll(
+                        const Color.fromARGB(255, 159, 11, 0),
+                      ),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                          color: const Color.fromARGB(255, 255, 255, 255)),
+                    ),
+                    onPressed: () {
+                      titleInput.clear();
+                      description.clear();
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+                SizedBox(width: 5),
+                Expanded(
+                  child: TextButton(
+                    style: ButtonStyle(
+                      shape: WidgetStatePropertyAll(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                      backgroundColor: WidgetStatePropertyAll(
+                        const Color.fromARGB(255, 0, 155, 8),
+                      ),
+                    ),
+                    child: Text(
+                      type,
+                      style: TextStyle(
+                          color: const Color.fromARGB(255, 255, 255, 255)),
+                    ),
+                    onPressed: () {
+                      if (titleInput.text.isNotEmpty &&
+                          description.text.isNotEmpty) {
+                        if (func == 1) {
+                          addTodo();
+                        } else if (func == 2) {
+                          updateTodo(todoId!);
+                        }
+                        Navigator.of(context).pop();
+                      } else {
+                        Fluttertoast.showToast(msg: "Fill all fields");
+                      }
+                    },
+                  ),
+                ),
+              ],
+            )
+          ],
+        );
+      },
+    );
   }
 
   AppBar appbar() {
     return AppBar(
       automaticallyImplyLeading: false,
-      backgroundColor: const Color.fromARGB(255, 210, 210, 210),
+      backgroundColor: const Color.fromARGB(255, 0, 161, 172),
       // centerTitle: true,
       title: Text(
         "Welcome, Todo Fire",
