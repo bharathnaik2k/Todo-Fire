@@ -10,7 +10,6 @@ import 'package:todo_firebase/auth/oauth_googlesignin.dart';
 import 'package:todo_firebase/constants/assets_cont.dart';
 import 'package:todo_firebase/constants/router/page_navigator.dart';
 import 'package:todo_firebase/screens/home_screen.dart';
-// import 'package:flutter_svg/flutter_svg.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -24,7 +23,6 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   void initState() {
-    // da(context);
     super.initState();
   }
 
@@ -90,9 +88,8 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  @override
+  @override 
   Widget build(BuildContext context) {
-    // final provider = Provider.of<AuthScreenController>(context, listen: false);
     log("created");
     return SafeArea(
       child: Scaffold(
@@ -151,11 +148,9 @@ class _AuthScreenState extends State<AuthScreen> {
                                 const Color.fromARGB(255, 230, 230, 230)),
                           ),
                           onPressed: () {
-                            // PageNavigator().pushNav(context, HomeScreen());
                             googleSignIn();
                           },
                           child:
-                              //  CircularProgressIndicator(),
                               Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [

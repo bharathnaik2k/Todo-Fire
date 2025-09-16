@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo_firebase/auth/oauth_googlesignin.dart';
 
@@ -19,19 +20,22 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
-  String? titleinput;
   TextEditingController titleInput = TextEditingController(text: "");
   final TextEditingController description = TextEditingController();
-  // @override
-  // void initState() {
-  //   getData();
-  //   super.initState();
-  // }
 
   late AnimationController _controller;
 
+  bool isLoading = false;
+  String? displayName;
+  String? email;
+  String? photoURL;
+  String? uid;
+
+  List<Map<String, dynamic>> allTodos = [];
+
   @override
   void initState() {
+    isLoading = true;
     getData();
     super.initState();
     _controller = AnimationController(
@@ -46,19 +50,9 @@ class _HomeScreenState extends State<HomeScreen>
     super.dispose();
   }
 
-  String? displayName;
-  String? email;
-  String? photoURL;
-  String? uid;
-
-  // Map<dynamic, dynamic> allTodo = [];
-
-  List<Map<String, dynamic>> allTodos = [];
-
   void getData() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     displayName = prefs.getString("displayName");
-    // log("${prefs.getString("displayName")}");
     email = prefs.getString("email");
     photoURL = prefs.getString("photoURL");
     uid = prefs.getString("uid");
@@ -66,25 +60,12 @@ class _HomeScreenState extends State<HomeScreen>
     getUser();
   }
 
-  void loadTodos() {
-    FirebaseFirestore.instance.collection("").get().asStream();
-  }
-
-  Future<void> getDataTodo() async {
-    var snapshot = await FirebaseFirestore.instance.collection('users').get();
-
-    for (var doc in snapshot.docs) {
-      print(doc.id); // document id
-      print(doc['name']); // field 'name'
-      print(doc['email']); // field 'email'
-    }
-  }
-
   Future<void> getUser() async {
     var snapshot = await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
-        .collection('todo') // sub-collection
+        .collection('todo')
+        .orderBy('createdAt', descending: false)
         .get();
 
     // for (var doc in snapshot.docs) {
@@ -95,21 +76,42 @@ class _HomeScreenState extends State<HomeScreen>
     allTodos = snapshot.docs.map((doc) {
       var data = doc.data();
 
+      DateTime dateTime =
+          DateTime.parse((data['createdAt'] as Timestamp).toDate().toString());
+      String formatted = DateFormat("hh:mm a - dd/MM/yyyy").format(dateTime);
+
       return {
         "id": doc.id,
         "title": data['title'],
         "description": data['description'],
         "isDone": data['isDone'],
-        "createdAt": (data['createdAt'] as Timestamp)
-            .toDate(), // convert Timestamp to DateTime
+        "createdAt": formatted,
       };
     }).toList();
+    isLoading = false;
     setState(() {});
     log(allTodos.toString());
   }
 
+  // Future<void> addData() async {
+  //   final data = {
+  //     'name': 'John Doe',
+  //     'email': 'john@example.com',
+  //     'timestamp': DateTime.now().millisecondsSinceEpoch,
+  //   };
+
+  //   await FirebaseFirestore.instance.collection('users').add(data);
+  // }
+
+  Stream<QuerySnapshot> getDataInOrder() {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .orderBy('timestamp', descending: false)
+        .snapshots();
+  }
+
   Future<void> addTodo() async {
-    await FirebaseFirestore.instance
+    dynamic addedNote = await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
         .collection('todo')
@@ -119,15 +121,14 @@ class _HomeScreenState extends State<HomeScreen>
       'createdAt': DateTime.now(),
       'isDone': false,
     });
-    Fluttertoast.showToast(msg: "Todo added successful ");
+    log(addedNote.toString());
+    Fluttertoast.showToast(msg: "Todo added successful");
     titleInput.clear();
     description.clear();
     getUser();
   }
 
-  Future<void> updateTodo(
-    String todoId,
-  ) async {
+  Future<void> updateTodo(String todoId) async {
     await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
@@ -141,6 +142,7 @@ class _HomeScreenState extends State<HomeScreen>
         'isDone': true,
       },
     );
+    Fluttertoast.showToast(msg: "Updated successful");
   }
 
   Future<void> deleteTodo(String todoId) async {
@@ -150,6 +152,7 @@ class _HomeScreenState extends State<HomeScreen>
         .collection('todo')
         .doc(todoId)
         .delete();
+    Fluttertoast.showToast(msg: "Deleted successful");
     getUser();
   }
 
@@ -167,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen>
               // const Color.fromARGB(255, 241, 158, 255),
               // Colors.red,
               // Colors.orange,
-              Colors.grey
+              const Color.fromARGB(255, 106, 106, 106)
             ],
           ),
         ),
@@ -183,13 +186,12 @@ class _HomeScreenState extends State<HomeScreen>
                     BoxShadow(
                       blurRadius: 1,
                       spreadRadius: 0.1,
-                      color: Colors.grey,
+                      color: const Color.fromARGB(255, 80, 80, 80),
                     )
                   ],
-                  color: const Color.fromARGB(255, 253, 255, 224),
+                  color: const Color.fromARGB(255, 255, 255, 255),
                 ),
                 child: Row(
-                  // mainAxisAlignment: ma,
                   children: [
                     CachedNetworkImage(
                       height: 50,
@@ -250,32 +252,6 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
               SizedBox(height: 8),
-              // TextButton(
-              //   style: ButtonStyle(
-              //     backgroundColor: WidgetStatePropertyAll(Colors.red),
-              //     minimumSize: WidgetStatePropertyAll(
-              //       Size(double.infinity, 30),
-              //     ),
-              //   ),
-              //   onPressed: () {
-              //     OauthGoogleSignIn().signOut(context);
-              //   },
-              //   child: Row(
-              //     mainAxisAlignment: MainAxisAlignment.center,
-              //     crossAxisAlignment: CrossAxisAlignment.center,
-              //     children: [
-              //       Icon(
-              //         Icons.logout,
-              //         color: Colors.white,
-              //       ),
-              //       SizedBox(width: 8),
-              //       Text(
-              //         "Logut Account",
-              //         style: TextStyle(color: Colors.white),
-              //       ),
-              //     ],
-              //   ),
-              // ),
               Divider(
                 color: const Color.fromARGB(255, 11, 0, 129),
                 thickness: 2,
@@ -284,149 +260,209 @@ class _HomeScreenState extends State<HomeScreen>
               ),
               Expanded(
                 child: Container(
-                  // padding: EdgeInsets.all(10),
-                  // decoration: BoxDecoration(
-                  //   borderRadius: BorderRadius.circular(8),
-                  //   boxShadow: [
-                  //     BoxShadow(
-                  //       blurRadius: 1,
-                  //       spreadRadius: 0.1,
-                  //       color: Colors.grey,
-                  //     )
-                  //   ],
-                  // color: const Color.fromARGB(255, 255, 251, 235),
-                  // ),
-                  child: allTodos.isEmpty
-                      ? Center(
-                          child: Text(
-                            "No Todo",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                            ),
-                          ),
-                        )
-                      : ListView.builder(
-                          shrinkWrap: true,
-                          padding: EdgeInsets.only(
-                              bottom: kFloatingActionButtonMargin + 75),
-                          itemCount: allTodos.length,
-                          itemBuilder: (context, index) {
-                            return Container(
-                              margin: EdgeInsets.symmetric(vertical: 5),
-                              padding: EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: [
-                                  BoxShadow(
-                                    blurRadius: 1,
-                                    spreadRadius: 0.1,
-                                    color: Colors.grey,
-                                  )
-                                ],
-                                color: const Color.fromARGB(255, 65, 65, 65),
+                  child: isLoading
+                      ? Center(child: CircularProgressIndicator())
+                      : allTodos.isEmpty
+                          ? Center(
+                              child: Text(
+                                "No Todo",
+                                style: TextStyle(
+                                  color: const Color.fromARGB(255, 255, 247, 0),
+                                  fontSize: 24,
+                                ),
                               ),
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    backgroundColor: const Color.fromARGB(
-                                        255, 147, 255, 251),
-                                    child: Text(
-                                      "${index + 1}",
-                                      style: TextStyle(
-                                          color: const Color.fromARGB(
-                                              255, 0, 0, 0)),
-                                    ),
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              padding: EdgeInsets.only(
+                                  bottom: kFloatingActionButtonMargin + 75),
+                              itemCount: allTodos.length,
+                              itemBuilder: (context, index) {
+                                return TweenAnimationBuilder(
+                                  tween: Tween<Offset>(
+                                    begin: Offset(1, 0),
+                                    end: Offset(0, 0),
                                   ),
-                                  SizedBox(width: 8),
-                                  Expanded(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                  duration: Duration(milliseconds: 400),
+                                  curve: Curves.easeIn,
+                                  builder: (context, offset, child) {
+                                    return Transform.translate(
+                                      offset: Offset(
+                                          offset.dx *
+                                              MediaQuery.of(context).size.width,
+                                          offset.dy),
+                                      child: child,
+                                    );
+                                  },
+                                  child: Container(
+                                    margin: EdgeInsets.symmetric(vertical: 5),
+                                    padding: EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          blurRadius: 1,
+                                          spreadRadius: 0.1,
+                                          color: Colors.grey,
+                                        )
+                                      ],
+                                      color:
+                                          const Color.fromARGB(255, 65, 65, 65),
+                                    ),
+                                    child: Row(
                                       children: [
-                                        Text(
-                                          allTodos[index]["title"].toString(),
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: const Color.fromARGB(
-                                                255, 242, 255, 0),
-                                            fontSize: 17,
+                                        CircleAvatar(
+                                          backgroundColor: Colors.primaries[
+                                              index % Colors.primaries.length],
+                                          child: Text(
+                                            "${index + 1}",
+                                            style: TextStyle(
+                                                color: const Color.fromARGB(
+                                                    255, 0, 0, 0)),
                                           ),
                                         ),
-                                        Text(
-                                          // overflow: ,
-                                          allTodos[index]["description"]
-                                              .toString(),
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 13,
+                                        SizedBox(width: 8),
+                                        Expanded(
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                allTodos[index]["title"]
+                                                    .toString(),
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: const Color.fromARGB(
+                                                      255, 242, 255, 0),
+                                                  fontSize: 17,
+                                                ),
+                                              ),
+                                              Text(
+                                                allTodos[index]["description"]
+                                                    .toString(),
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 13,
+                                                ),
+                                              ),
+                                              Row(
+                                                children: [
+                                                  allTodos[index]["isDone"]
+                                                      ? Text(
+                                                          "Edited : ",
+                                                          style: TextStyle(
+                                                            color: const Color
+                                                                .fromARGB(255,
+                                                                172, 161, 255),
+                                                            fontSize: 10,
+                                                          ),
+                                                        )
+                                                      : Text(
+                                                          "Created : ",
+                                                          style: TextStyle(
+                                                            color: const Color
+                                                                .fromARGB(255,
+                                                                109, 255, 98),
+                                                            fontSize: 10,
+                                                          ),
+                                                        ),
+                                                  Text(
+                                                    allTodos[index]["createdAt"]
+                                                        .toString(),
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 8,
+                                                    ),
+                                                  ),
+                                                ],
+                                              )
+                                            ],
                                           ),
                                         ),
+                                        // Spacer(),
+                                        Align(
+                                          alignment: Alignment.centerRight,
+                                          child: PopupMenuButton<String>(
+                                            icon: const Icon(
+                                              Icons.more_vert,
+                                              color: Color.fromARGB(
+                                                  255, 255, 255, 255),
+                                            ),
+                                            color: Color.fromARGB(
+                                                255, 255, 255, 255),
+                                            onSelected: (value) {
+                                              if (value == "1") {
+                                                showDialogButton(context,
+                                                    "Update", "Update", 2,
+                                                    id: allTodos[index]["id"]
+                                                        .toString());
+                                                titleInput.text =
+                                                    allTodos[index]["title"]
+                                                        .toString();
+                                                description.text =
+                                                    allTodos[index]
+                                                            ["description"]
+                                                        .toString();
+
+                                                setState(() {});
+                                              } else if (value == "2") {
+                                                deleteTodo(allTodos[index]["id"]
+                                                    .toString());
+                                              }
+                                            },
+                                            itemBuilder:
+                                                (BuildContext context) =>
+                                                    <PopupMenuEntry<String>>[
+                                              const PopupMenuItem<String>(
+                                                value: '1',
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.edit_document,
+                                                      color: Color.fromARGB(
+                                                          255, 71, 62, 255),
+                                                    ),
+                                                    SizedBox(width: 5),
+                                                    Text(
+                                                      'Update',
+                                                      style: TextStyle(
+                                                          color: Color.fromARGB(
+                                                              255,
+                                                              71,
+                                                              62,
+                                                              255)),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const PopupMenuItem<String>(
+                                                value: '2',
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.delete,
+                                                      color: Colors.red,
+                                                    ),
+                                                    SizedBox(width: 5),
+                                                    Text(
+                                                      'Delete',
+                                                      style: TextStyle(
+                                                          color: Colors.red),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
                                       ],
                                     ),
                                   ),
-                                  // Spacer(),
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: PopupMenuButton<String>(
-                                      icon: const Icon(
-                                        Icons.more_vert,
-                                        color:
-                                            Color.fromARGB(255, 255, 255, 255),
-                                      ),
-                                      color: Color.fromARGB(255, 192, 255, 140),
-                                      onSelected: (value) {
-                                        if (value == "1") {
-                                          // updateTodo(allTodos[index]["id"].toString(), true);
-                                          showDialogButton(
-                                              context, "Update", "Update", 2,
-                                              todoId: allTodos[index]["id"]
-                                                  .toString());
-                                          titleInput.text = allTodos[index]
-                                                  ["title"]
-                                              .toString();
-                                          description.text = allTodos[index]
-                                                  ["description"]
-                                              .toString();
-
-                                          setState(() {});
-                                        } else if (value == "2") {
-                                          deleteTodo(
-                                              allTodos[index]["id"].toString());
-                                        }
-                                      },
-                                      itemBuilder: (BuildContext context) =>
-                                          <PopupMenuEntry<String>>[
-                                        const PopupMenuItem<String>(
-                                          value: '1',
-                                          child: Row(
-                                            children: [
-                                              Icon(Icons.edit),
-                                              SizedBox(width: 3),
-                                              Text('Update'),
-                                            ],
-                                          ),
-                                        ),
-                                        const PopupMenuItem<String>(
-                                          value: '2',
-                                          child: Row(
-                                            children: [
-                                              Icon(Icons.delete),
-                                              SizedBox(width: 3),
-                                              Text('Delete'),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                ],
-                              ),
-                            );
-                          },
-                        ),
+                                );
+                              },
+                            ),
                 ),
               )
             ],
@@ -487,14 +523,14 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<dynamic> showDialogButton(
-      BuildContext context, String method, String type, int func,
-      {String? todoId}) {
+      BuildContext context, String method, String type, dynamic func,
+      {String? id}) {
     return showDialog(
       barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: const Color.fromARGB(255, 182, 182, 182),
+          backgroundColor: const Color.fromARGB(255, 255, 255, 255),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(6),
           ),
@@ -584,7 +620,7 @@ class _HomeScreenState extends State<HomeScreen>
                         if (func == 1) {
                           addTodo();
                         } else if (func == 2) {
-                          updateTodo(todoId!);
+                          updateTodo(id.toString());
                         }
                         Navigator.of(context).pop();
                       } else {
@@ -605,7 +641,6 @@ class _HomeScreenState extends State<HomeScreen>
     return AppBar(
       automaticallyImplyLeading: false,
       backgroundColor: const Color.fromARGB(255, 0, 161, 172),
-      // centerTitle: true,
       title: Text(
         "Welcome, Todo Fire",
         style: TextStyle(

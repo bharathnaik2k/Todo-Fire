@@ -5,9 +5,6 @@ import 'package:todo_firebase/screens/home_screen.dart';
 
 class AuthChecker extends StatelessWidget {
   const AuthChecker({super.key});
-  da() {
-    FirebaseAuth.instance.currentUser;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,10 +14,8 @@ class AuthChecker extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasData) {
-          // already logged in
           return HomeScreen();
         } else {
-          // not logged in
           return AuthScreen();
         }
       },

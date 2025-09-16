@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todo_firebase/controller/auth_screen_controller.dart';
 import 'package:todo_firebase/firebase_options.dart';
-import 'package:todo_firebase/screens/user_credential.dart';
+import 'package:todo_firebase/user_credential.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +23,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // da(context);
     return MaterialApp(
       theme: ThemeData(fontFamily: "exo"),
       home: AuthChecker(),
