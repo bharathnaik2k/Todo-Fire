@@ -49,8 +49,6 @@ class OauthGoogleSignIn {
       GoogleSignInClientAuthorization? authorization = await authorizationClient
           .authorizationForScopes(["email", "profile"]);
       final accessToken = authorization?.accessToken;
-      // await prefs.setString("accessToken", accessToken.toString());
-      // await prefs.setString("idToken", accessToken.toString());
       if (accessToken == null) {
         final authorization2 = await authorizationClient
             .authorizationForScopes(["email", "profile"]);
@@ -96,21 +94,12 @@ class OauthGoogleSignIn {
         }
         log("6");
       }
-      // prefs.getString(key)
       log(userCredential.toString());
       return userCredential;
     } catch (e) {
-      // log(e.toString());
-      // throw e.toString();
-      // log(e.toString());
-      // return UserCredential;
       Fluttertoast.showToast(msg: "Canceled");
-      // return UserCredential
-      // throw Exception();
       return null;
     }
-
-    // return ;
   }
 
   Future<void> signOut(BuildContext context) async {
