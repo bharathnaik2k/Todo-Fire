@@ -1,5 +1,5 @@
 <p align="center">
-  <img src= "https://github.com/bharathnaik2k/Todo-Fire/blob/main/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png"/>
+  <img src= "https://github.com/bharathnaik2k/Todo-Fire/blob/master/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png"/>
 </p>
 
 <p align="center">
@@ -9,12 +9,12 @@
 </p>
 
 ## App Preview
-<img src="https://github.com/bharathnaik2k/Todo-Fire/blob/main/preview.png"/>
+<img src="https://github.com/bharathnaik2k/Todo-Fire/blob/master/preview.png"/>
 
 <h1 align="center" style="border-bottom: none">
     <b>
 
-###### Check All Screenshots [Here](https://github.com/bharathnaik2k/Todo-Fire/tree/main/screenshots) 
+###### Check All Screenshots [Here](https://github.com/bharathnaik2k/Todo-Fire/tree/master/screenshots) 
 
 </h1>
 
